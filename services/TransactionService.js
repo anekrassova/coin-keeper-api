@@ -21,6 +21,35 @@ export class TransactionService {
       );
       const currency = user.preffered_currency;
 
+      switch (type) {
+         case 'income':
+            const incomeAccount = await Account.findByIdAndUpdate(
+               to,
+               { $inc: { amount: amountInKZT } },
+               { new: true }
+            );
+            break;
+         case 'expense':
+            const expenseAccount = await Account.findByIdAndUpdate(
+               from,
+               { $inc: { amount: -amountInKZT } },
+               { new: true }
+            );
+            break;
+         case 'transfer':
+            const fromAccount = await Account.findByIdAndUpdate(
+               from,
+               { $inc: { amount: -amountInKZT } },
+               { new: true }
+            );
+            const toAccount = await Account.findByIdAndUpdate(
+               to,
+               { $inc: { amount: amountInKZT } },
+               { new: true }
+            );
+            break;
+      }
+
       const accounts = await Account.find({ user_id });
       let current_balance = 0;
       accounts.forEach((account) => {
@@ -47,10 +76,21 @@ export class TransactionService {
          user_id,
       });
 
+      const transformedTransaction = {
+         _id: transaction._id,
+         type: transaction.type,
+         from: transaction.from,
+         to: transaction.to,
+         date: transaction.date,
+         amount: String(amount) + currencyInSign[currency],
+         comment: transaction.comment,
+         current_balance: String(current_balance) + currencyInSign[currency],
+      };
+
       return {
          status: 201,
          message: 'Transaction created successfully',
-         data: transaction,
+         data: transformedTransaction,
       };
    }
 
@@ -64,6 +104,58 @@ export class TransactionService {
          'KZT'
       );
 
+      const transactionToUpdate = await Transaction.findById(id);
+      if (!transactionToUpdate)
+         throw { status: 404, message: 'Transaction not found.' };
+
+      const prevTransactionAmount = transactionToUpdate.amount;
+      const newTransactionAmount = amountInKZT;
+
+      switch (transactionToUpdate.type) {
+         case 'income':
+            const incomeAccount = await Account.findByIdAndUpdate(
+               to,
+               {
+                  $inc: {
+                     amount: newTransactionAmount - prevTransactionAmount,
+                  },
+               },
+               { new: true }
+            );
+            break;
+         case 'expense':
+            const expenseAccount = await Account.findByIdAndUpdate(
+               from,
+               {
+                  $inc: {
+                     amount: prevTransactionAmount - newTransactionAmount,
+                  },
+               },
+               { new: true }
+            );
+            break;
+         case 'transfer':
+            const fromAccount = await Account.findByIdAndUpdate(
+               from,
+               {
+                  $inc: {
+                     amount: prevTransactionAmount - newTransactionAmount,
+                  },
+               },
+               { new: true }
+            );
+            const toAccount = await Account.findByIdAndUpdate(
+               to,
+               {
+                  $inc: {
+                     amount: newTransactionAmount - prevTransactionAmount,
+                  },
+               },
+               { new: true }
+            );
+            break;
+      }
+
       const updatedTransaction = await Transaction.findByIdAndUpdate(id, {
          from,
          to,
@@ -72,10 +164,23 @@ export class TransactionService {
          comment,
       });
 
+      const transformedTransaction = {
+         _id: updatedTransaction._id,
+         type: updatedTransaction.type,
+         from: updatedTransaction.from,
+         to: updatedTransaction.to,
+         date: updatedTransaction.date,
+         amount: String(amount) + currencyInSign[updatedTransaction.currency],
+         comment: updatedTransaction.comment,
+         current_balance:
+            String(updatedTransaction.current_balance) +
+            currencyInSign[updatedTransaction.currency],
+      };
+
       return {
          status: 200,
          message: 'Transaction updated successfully',
-         data: updatedTransaction,
+         data: transformedTransaction,
       };
    }
 
@@ -100,13 +205,48 @@ export class TransactionService {
 
       return {
          status: 200,
-         data: transactions,
+         data: formattedTransactions,
       };
    }
 
    async deleteTransaction(id) {
-      const deleted = await Transaction.findOneAndDelete({ _id: id });
-      if (!deleted) throw { status: 404, message: 'Transaction not found' };
+      const transactionToDelete = await Transaction.findById(id);
+      if (!transactionToDelete) {
+         throw { status: 404, message: 'Transaction not found' };
+      }
+
+      const transactionAmount = transactionToDelete.amount;
+
+      switch (transactionToDelete.type) {
+         case 'income':
+            const incomeAccount = await Account.findByIdAndUpdate(
+               transactionToDelete.to,
+               { $inc: { amount: -transactionAmount } },
+               { new: true }
+            );
+            break;
+         case 'expense':
+            const expenseAccount = await Account.findByIdAndUpdate(
+               transactionToDelete.from,
+               { $inc: { amount: transactionAmount } },
+               { new: true }
+            );
+            break;
+         case 'transfer':
+            const fromAccount = await Account.findByIdAndUpdate(
+               transactionToDelete.from,
+               { $inc: { amount: transactionAmount } },
+               { new: true }
+            );
+            const toAccount = await Account.findByIdAndUpdate(
+               transactionToDelete.to,
+               { $inc: { amount: -transactionAmount } },
+               { new: true }
+            );
+            break;
+      }
+
+      await Transaction.findByIdAndDelete(id);
 
       return {
          status: 200,
