@@ -77,7 +77,7 @@ export class TransactionService {
       });
 
       const transformedTransaction = {
-         _id: transaction._id,
+         id: transaction._id,
          type: transaction.type,
          from: transaction.from,
          to: transaction.to,
@@ -165,7 +165,7 @@ export class TransactionService {
       });
 
       const transformedTransaction = {
-         _id: updatedTransaction._id,
+         id: updatedTransaction._id,
          type: updatedTransaction.type,
          from: updatedTransaction.from,
          to: updatedTransaction.to,
@@ -196,12 +196,18 @@ export class TransactionService {
          date: { $gte: startOfMonth, $lte: endOfMonth },
       });
 
-      const formattedTransactions = transactions.map((t) => ({
-         ...t.toObject(),
-         amount: String(t.amount) + currencyInSign[t.currency],
-         current_balance:
-            String(t.current_balance) + currencyInSign[t.currency],
-      }));
+      const formattedTransactions = transactions.map((t) => {
+         const obj = t.toObject();
+         const { _id, ...rest } = obj;
+
+         return {
+            id: _id,
+            ...rest,
+            amount: String(t.amount) + currencyInSign[t.currency],
+            current_balance:
+               String(t.current_balance) + currencyInSign[t.currency],
+         };
+      });
 
       return {
          status: 200,

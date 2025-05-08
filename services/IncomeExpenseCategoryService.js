@@ -22,10 +22,18 @@ export class IncomeExpenseCategoryService {
       });
       await newCategory.save();
 
+      const transformedCategory = {
+         id: newCategory._id,
+         title,
+         receiving_plan:
+            String(amount) + currencyInSign[user.preffered_currency],
+         user_id,
+      };
+
       return {
          status: 200,
          message: 'Income category created',
-         data: newCategory,
+         data: transformedCategory,
       };
    }
 
@@ -45,10 +53,18 @@ export class IncomeExpenseCategoryService {
       });
       await newCategory.save();
 
+      const transformedCategory = {
+         id: newCategory._id,
+         title,
+         receiving_plan:
+            String(amount) + currencyInSign[user.preffered_currency],
+         user_id,
+      };
+
       return {
          status: 200,
          message: 'Expense category created',
-         data: newCategory,
+         data: transformedCategory,
       };
    }
 
@@ -83,7 +99,7 @@ export class IncomeExpenseCategoryService {
       );
 
       const convertedCategories = categories.map((c) => ({
-         _id: c._id,
+         id: c._id,
          title: c.title,
          receiving_plan:
             String(
@@ -135,7 +151,7 @@ export class IncomeExpenseCategoryService {
       );
 
       const convertedCategories = categories.map((c) => ({
-         _id: c._id,
+         id: c._id,
          title: c.title,
          spending_plan:
             String(
@@ -177,9 +193,17 @@ export class IncomeExpenseCategoryService {
          { new: true }
       );
 
+      const transformedCategory = {
+         id: updatedCategory._id,
+         title,
+         receiving_plan:
+            String(amount) + currencyInSign[user.preffered_currency],
+         user_id,
+      };
+
       return {
          status: 200,
-         data: updatedCategory,
+         data: transformedCategory,
          message: 'Income category updated',
       };
    }
@@ -200,9 +224,17 @@ export class IncomeExpenseCategoryService {
          { new: true }
       );
 
+      const transformedCategory = {
+         id: updatedCategory._id,
+         title,
+         receiving_plan:
+            String(amount) + currencyInSign[user.preffered_currency],
+         user_id,
+      };
+
       return {
          status: 200,
-         data: updatedCategory,
+         data: transformedCategory,
          message: 'Expense category updated',
       };
    }

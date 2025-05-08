@@ -30,6 +30,7 @@ export class AccountService {
          status: 200,
          message: 'Account created successfully',
          data: {
+            id: newAccount._id,
             title: newAccount.title,
             amount,
             include_in_total,
@@ -71,7 +72,7 @@ export class AccountService {
             user.preffered_currency
          );
          return {
-            _id: account._id,
+            id: account._id,
             title: account.title,
             amount:
                String(parseFloat(convertedAmount.toFixed(2))) +
@@ -108,9 +109,17 @@ export class AccountService {
          { new: true }
       );
 
+      const transformedAccount = {
+         id: updatedAccount._id,
+         title: updatedAccount.title,
+         amount: updatedAccount.amount,
+         include_in_total: updatedAccount.include_in_total,
+         user_id: updatedAccount.user_id,
+      };
+
       return {
          status: 200,
-         data: updatedAccount,
+         data: transformedAccount,
          message: 'Account updated',
       };
    }
