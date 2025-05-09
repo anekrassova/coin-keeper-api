@@ -6,6 +6,8 @@ const router = express.Router();
 const userService = new UserService();
 
 router.post('/register', async (req, res) => {
+   console.log(`Register request: `, req.body);
+
    const { email, password } = req.body;
 
    try {
@@ -21,6 +23,8 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
+   console.log(`Login request: `, req.body);
+
    const { email, password } = req.body;
 
    try {
@@ -41,10 +45,12 @@ router.post('/login', async (req, res) => {
 
 router.post('/changeEmail', authMiddleware, async (req, res) => {
    try {
+      console.log('запрос дошел до изменения эмейла');
       const { email } = req.body;
       const userId = req.userId;
 
       const result = await userService.changeEmail(userId, email);
+      console.log(result);
 
       res.status(result.status).json({
          message: result.message,
@@ -62,10 +68,15 @@ router.post('/changeEmail', authMiddleware, async (req, res) => {
 
 router.post('/changePassword', authMiddleware, async (req, res) => {
    try {
-      const { password } = req.body;
+      const { oldPassword, newPassword } = req.body;
       const userId = req.userId;
 
-      const result = await userService.changePassword(userId, password);
+      const result = await userService.changePassword(
+         userId,
+         oldPassword,
+         newPassword
+      );
+      console.log('пароль изменен успешно');
 
       res.status(result.status).json({
          message: result.message,

@@ -4,6 +4,9 @@ import { User } from '../models/user.js';
 
 export class UserService {
    constructor() {
+      if (!process.env.JWT_SECRET) {
+         throw new Error('JWT_SECRET is not defined in environment variables');
+      }
       this.jwtSecret = process.env.JWT_SECRET;
    }
 
@@ -100,6 +103,7 @@ export class UserService {
          // возвращение токена и объекта пользователя без пароля
          const userWithoutPassword = {
             email: existingUser.email,
+            prefferedCurrency: existingUser.preffered_currency,
          };
 
          return {
@@ -152,7 +156,10 @@ export class UserService {
             status: 200,
             message: 'Email successfully updated.',
             token,
-            user: { email: updatedUser.email },
+            user: {
+               email: updatedUser.email,
+               prefferedCurrency: updatedUser.preffered_currency,
+            },
          };
       } catch (err) {
          return {
@@ -163,13 +170,23 @@ export class UserService {
    }
 
    // метод для изменения пароля
-   async changePassword(userId, newPassword) {
+   async changePassword(userId, oldPassword, newPassword) {
       try {
          if (!newPassword || newPassword.length < 6) {
             throw {
                status: 400,
                message: 'Password must be at least 6 characters long.',
             };
+         }
+
+         const existingUser = await User.findById(userId);
+
+         const isPasswordCorrect = await bcrypt.compare(
+            oldPassword,
+            existingUser.password
+         );
+         if (!isPasswordCorrect) {
+            throw { status: 400, message: 'Incorrect old password provided.' };
          }
 
          const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -194,7 +211,10 @@ export class UserService {
             status: 200,
             message: 'Password successfully updated.',
             token,
-            user: { email: updatedUser.email },
+            user: {
+               email: updatedUser.email,
+               prefferedCurrency: existingUser.preffered_currency,
+            },
          };
       } catch (err) {
          return {
@@ -229,7 +249,7 @@ export class UserService {
             message: 'Preferred currency successfully updated.',
             user: {
                email: updatedUser.email,
-               preffered_currency: updatedUser.preffered_currency,
+               prefferedCurrency: updatedUser.preffered_currency,
             },
          };
       } catch (err) {

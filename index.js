@@ -14,6 +14,13 @@ app.use(cors());
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+   console.log(
+      `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`
+   );
+   next();
+});
+
 app.use('/api/auth', userRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/categories', categoryRoutes);
