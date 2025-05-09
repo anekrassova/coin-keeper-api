@@ -6,7 +6,7 @@ const exchangeRatesToKZT = {
 };
 
 export function convertCurrency(fromCurrency, fromAmount, toCurrency) {
-   console.log('fromCurrency: ', fromCurrency, 'tocurrency: ', toCurrency);
+   //console.log('fromCurrency: ', fromCurrency, 'tocurrency: ', toCurrency);
    if (!exchangeRatesToKZT[fromCurrency] || !exchangeRatesToKZT[toCurrency]) {
       throw new Error('Unsupported currency.');
    }
