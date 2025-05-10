@@ -87,8 +87,10 @@ export class TransactionService {
          type,
          from,
          fromModel: type === 'income' ? 'IncomeCategory' : 'Account',
+         fromName,
          to,
          toModel: type === 'expense' ? 'ExpenseCategory' : 'Account',
+         toName,
          amount: amountInKZT,
          date,
          comment,
@@ -102,8 +104,8 @@ export class TransactionService {
          type: transaction.type,
          from: transaction.from,
          to: transaction.to,
-         fromName, // добавляем fromName
-         toName, // добавляем toName
+         fromName: transaction.fromName,
+         toName: transaction.toName,
          date: transaction.date,
          amount: String(amount) + currencyInSign[currency],
          comment: transaction.comment,
@@ -237,45 +239,20 @@ export class TransactionService {
       const transactions = await Transaction.find({
          user_id,
          date: { $gte: startOfMonth, $lte: endOfMonth },
-      });
+      }).sort({ date: -1 });
 
-      const formattedTransactions = await Promise.all(
-         transactions.map(async (t) => {
-            const obj = t.toObject();
-            const { _id, from, to, type, ...rest } = obj;
-
-            let fromName = '';
-            let toName = '';
-
-            // Поиск fromName и toName в зависимости от типа транзакции
-            if (type === 'income') {
-               const incomeCategory = await IncomeCategory.findById(from);
-               const account = await Account.findById(to);
-               fromName = incomeCategory ? incomeCategory.title : '';
-               toName = account ? account.title : '';
-            } else if (type === 'expense') {
-               const account = await Account.findById(from);
-               const expenseCategory = await ExpenseCategory.findById(to);
-               fromName = account ? account.title : '';
-               toName = expenseCategory ? expenseCategory.title : '';
-            } else if (type === 'transfer') {
-               const fromAccount = await Account.findById(from);
-               const toAccount = await Account.findById(to);
-               fromName = fromAccount ? fromAccount.title : '';
-               toName = toAccount ? toAccount.title : '';
-            }
-
-            return {
-               id: _id,
-               fromName,
-               toName,
-               ...rest,
-               amount: String(t.amount) + currencyInSign[t.currency],
-               current_balance:
-                  String(t.current_balance) + currencyInSign[t.currency],
-            };
-         })
-      );
+      const formattedTransactions = transactions.map((t) => ({
+         id: t._id,
+         fromName: t.fromName,
+         toName: t.toName,
+         type: t.type,
+         date: t.date,
+         comment: t.comment,
+         currency: t.currency,
+         amount: String(t.amount) + currencyInSign[t.currency],
+         current_balance:
+            String(t.current_balance) + currencyInSign[t.currency],
+      }));
 
       return {
          status: 200,

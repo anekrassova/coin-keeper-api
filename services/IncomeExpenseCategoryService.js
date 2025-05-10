@@ -25,8 +25,7 @@ export class IncomeExpenseCategoryService {
       const transformedCategory = {
          id: newCategory._id,
          title,
-         receiving_plan:
-            String(amount) + currencyInSign[user.preffered_currency],
+         amount: String(amount) + currencyInSign[user.preffered_currency],
          user_id,
       };
 
@@ -56,8 +55,7 @@ export class IncomeExpenseCategoryService {
       const transformedCategory = {
          id: newCategory._id,
          title,
-         receiving_plan:
-            String(amount) + currencyInSign[user.preffered_currency],
+         amount: String(amount) + currencyInSign[user.preffered_currency],
          user_id,
       };
 
@@ -101,7 +99,7 @@ export class IncomeExpenseCategoryService {
       const convertedCategories = categories.map((c) => ({
          id: c._id,
          title: c.title,
-         receiving_plan:
+         amount:
             String(
                parseFloat(
                   convertCurrency(
@@ -153,7 +151,7 @@ export class IncomeExpenseCategoryService {
       const convertedCategories = categories.map((c) => ({
          id: c._id,
          title: c.title,
-         spending_plan:
+         amount:
             String(
                parseFloat(
                   convertCurrency(
@@ -196,8 +194,7 @@ export class IncomeExpenseCategoryService {
       const transformedCategory = {
          id: updatedCategory._id,
          title,
-         receiving_plan:
-            String(amount) + currencyInSign[user.preffered_currency],
+         amount: String(amount) + currencyInSign[user.preffered_currency],
          user_id,
       };
 
@@ -227,8 +224,7 @@ export class IncomeExpenseCategoryService {
       const transformedCategory = {
          id: updatedCategory._id,
          title,
-         receiving_plan:
-            String(amount) + currencyInSign[user.preffered_currency],
+         amount: String(amount) + currencyInSign[user.preffered_currency],
          user_id,
       };
 

@@ -17,6 +17,10 @@ const transactionSchema = new Schema({
       required: true,
       enum: ['Account', 'IncomeCategory'],
    },
+   fromName: {
+      type: String,
+      required: true,
+   },
    to: {
       type: Schema.Types.ObjectId,
       required: true,
@@ -26,6 +30,10 @@ const transactionSchema = new Schema({
       type: String,
       required: true,
       enum: ['Account', 'ExpenseCategory'],
+   },
+   toName: {
+      type: String,
+      required: true,
    },
    amount: {
       type: Number,
