@@ -25,7 +25,6 @@ export class TransactionService {
 
       let fromName, toName;
 
-      // Определяем fromName и toName в зависимости от типа транзакции
       switch (type) {
          case 'income':
             const incomeCategory = await IncomeCategory.findById(from);
@@ -82,6 +81,7 @@ export class TransactionService {
             );
          }
       });
+      current_balance = Math.round(current_balance * 100) / 100;
 
       const transaction = await Transaction.create({
          type,
@@ -119,19 +119,29 @@ export class TransactionService {
       };
    }
 
-   async updateTransaction(id, from, to, amount, date, comment, user_id) {
+   async updateTransaction(
+      id,
+      newAmount,
+      newCurrency,
+      newDate,
+      newComment,
+      user_id
+   ) {
       const user = await User.findById(user_id);
       if (!user) throw { status: 404, message: 'User not found' };
 
-      const amountInKZT = convertCurrency(
-         user.preffered_currency,
-         amount,
-         'KZT'
-      );
+      const amountInKZT = convertCurrency(newCurrency, newAmount, 'KZT');
 
       const transactionToUpdate = await Transaction.findById(id);
       if (!transactionToUpdate)
          throw { status: 404, message: 'Transaction not found.' };
+
+      const oldBalance = transactionToUpdate.current_balance;
+      const newBalance = convertCurrency(
+         transactionToUpdate.currency,
+         oldBalance,
+         newCurrency
+      );
 
       const prevTransactionAmount = transactionToUpdate.amount;
       const newTransactionAmount = amountInKZT;
@@ -140,12 +150,14 @@ export class TransactionService {
 
       switch (transactionToUpdate.type) {
          case 'income':
-            const incomeCategory = await IncomeCategory.findById(from);
+            const incomeCategory = await IncomeCategory.findById(
+               transactionToUpdate.from
+            );
             fromName = incomeCategory
                ? incomeCategory.title
                : 'Unknown Income Category';
             const incomeAccount = await Account.findByIdAndUpdate(
-               to,
+               transactionToUpdate.to,
                {
                   $inc: {
                      amount: newTransactionAmount - prevTransactionAmount,
@@ -158,7 +170,7 @@ export class TransactionService {
 
          case 'expense':
             const expenseAccount = await Account.findByIdAndUpdate(
-               from,
+               transactionToUpdate.from,
                {
                   $inc: {
                      amount: prevTransactionAmount - newTransactionAmount,
@@ -169,7 +181,9 @@ export class TransactionService {
             fromName = expenseAccount
                ? expenseAccount.title
                : 'Unknown Account';
-            const expenseCategory = await ExpenseCategory.findById(to);
+            const expenseCategory = await ExpenseCategory.findById(
+               transactionToUpdate.to
+            );
             toName = expenseCategory
                ? expenseCategory.title
                : 'Unknown Expense Category';
@@ -177,7 +191,7 @@ export class TransactionService {
 
          case 'transfer':
             const fromAccount = await Account.findByIdAndUpdate(
-               from,
+               transactionToUpdate.from,
                {
                   $inc: {
                      amount: prevTransactionAmount - newTransactionAmount,
@@ -187,7 +201,7 @@ export class TransactionService {
             );
             fromName = fromAccount ? fromAccount.title : 'Unknown Account';
             const toAccount = await Account.findByIdAndUpdate(
-               to,
+               transactionToUpdate.to,
                {
                   $inc: {
                      amount: newTransactionAmount - prevTransactionAmount,
@@ -200,11 +214,10 @@ export class TransactionService {
       }
 
       const updatedTransaction = await Transaction.findByIdAndUpdate(id, {
-         from,
-         to,
          amount: amountInKZT,
-         date,
-         comment,
+         currency: newCurrency,
+         date: newDate,
+         comment: newComment,
       });
 
       const transformedTransaction = {
@@ -212,10 +225,12 @@ export class TransactionService {
          type: updatedTransaction.type,
          from: updatedTransaction.from,
          to: updatedTransaction.to,
-         fromName, // добавляем fromName
-         toName, // добавляем toName
+         fromName,
+         toName,
          date: updatedTransaction.date,
-         amount: String(amount) + currencyInSign[updatedTransaction.currency],
+         amount:
+            String(updatedTransaction.amount) +
+            currencyInSign[updatedTransaction.currency],
          comment: updatedTransaction.comment,
          current_balance:
             String(updatedTransaction.current_balance) +
@@ -249,9 +264,14 @@ export class TransactionService {
          date: t.date,
          comment: t.comment,
          currency: t.currency,
-         amount: String(t.amount) + currencyInSign[t.currency],
+         amount:
+            String(convertCurrency('KZT', t.amount, t.currency)) +
+            currencyInSign[t.currency],
          current_balance:
             String(t.current_balance) + currencyInSign[t.currency],
+         amountInUserCurrency:
+            String(convertCurrency('KZT', t.amount, user.preffered_currency)) +
+            currencyInSign[user.preffered_currency],
       }));
 
       return {

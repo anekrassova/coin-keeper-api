@@ -53,15 +53,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
    try {
       const transactionId = req.params.id;
       const userId = req.userId;
-      const { from, to, amount, date, comment } = req.body;
+      const { newAmount, newCurrency, newDate, newComment } = req.body;
 
       const result = await transactionService.updateTransaction(
          transactionId,
-         from,
-         to,
-         amount,
-         date,
-         comment,
+         newAmount,
+         newCurrency,
+         newDate,
+         newComment,
          userId
       );
 
