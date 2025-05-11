@@ -218,6 +218,7 @@ export class TransactionService {
          currency: newCurrency,
          date: newDate,
          comment: newComment,
+         current_balance: newBalance,
       });
 
       const transformedTransaction = {
